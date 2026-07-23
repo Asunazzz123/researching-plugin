@@ -1,0 +1,7 @@
+interface:
+  display_name: "Research Router"
+  short_description: "Route evidence and research progress to focused skills"
+  default_prompt: "Use $using-researching to route my current evidence or research task to the right focused workflow."
+
+policy:
+  allow_implicit_invocation: true
