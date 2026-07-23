@@ -1,0 +1,43 @@
+{
+  "name": "researching-plugin",
+  "version": "0.6.0",
+  "description": "Route research tasks into literature discovery, evidence synthesis, cross-disciplinary research briefs, human-supervised direction selection, and optional authorized planning or execution workflows.",
+  "author": {
+    "name": "Asuna",
+    "url": "https://github.com/Asunazzz123"
+  },
+  "homepage": "https://github.com/Asunazzz123/researching-plugin",
+  "repository": "https://github.com/Asunazzz123/researching-plugin",
+  "keywords": [
+    "academic-research",
+    "paper-search",
+    "arxiv",
+    "alphaxiv",
+    "mcp",
+    "literature-search",
+    "hypothesis-generation",
+    "experiment-design",
+    "research-workflow"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Researching",
+    "shortDescription": "Build evidence-grounded, human-supervised research directions",
+    "longDescription": "Routes research tasks to focused literature discovery, evidence grounding, cross-disciplinary concept and capability mapping, research-route comparison, human decision checkpoints, and optional separately authorized planning or execution.",
+    "developerName": "Asuna",
+    "category": "Education",
+    "capabilities": [
+      "Read",
+      "Write",
+      "Interactive"
+    ],
+    "websiteURL": "https://github.com/Asunazzz123/researching-plugin",
+    "defaultPrompt": [
+      "Use the researching workflow to find papers for my current task.",
+      "Find a paper, determine how I can access it, and extract relevant evidence.",
+      "Turn my rough question into a research brief with feasible routes and a human decision checkpoint."
+    ],
+    "brandColor": "#B31B1B"
+  },
+  "mcpServers": "./.mcp.json"
+}

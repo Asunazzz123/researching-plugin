@@ -1,0 +1,14 @@
+interface:
+  display_name: "Paper Searching"
+  short_description: "Find papers, resolve access, and retrieve authorized text"
+  default_prompt: "Use $researching-paper-searching to find and access papers relevant to my current research context."
+
+policy:
+  allow_implicit_invocation: true
+
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "alphaxiv-arxiv"
+      description: "Read-oriented alphaXiv MCP bridge for arXiv discovery and paper reading"
+      transport: "stdio"
