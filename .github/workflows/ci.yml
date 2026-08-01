@@ -1,0 +1,252 @@
+name: validate
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  policy:
+    name: Repository policy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Require a short-lived PR branch
+        if: github.event_name == 'pull_request'
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          case "$HEAD_REF" in
+            codex/*|hotfix/*|dependabot/*) ;;
+            *)
+              echo "PR branch must use codex/*, hotfix/*, or dependabot/*: $HEAD_REF" >&2
+              exit 1
+              ;;
+          esac
+
+      - name: Keep local Codex instructions untracked
+        run: |
+          if git ls-files --error-unmatch AGENTS.md >/dev/null 2>&1; then
+            echo "AGENTS.md is local-only and must not be tracked" >&2
+            exit 1
+          fi
+          git check-ignore --quiet AGENTS.md
+
+      - name: Validate release tag
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          if [[ ! "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$ ]]; then
+            echo "Release tag is not valid SemVer: $RELEASE_TAG" >&2
+            exit 1
+          fi
+
+          manifest_version="$(python -c 'import json; print(json.load(open(".codex-plugin/plugin.json"))["version"])')"
+          if [[ "v$manifest_version" != "$RELEASE_TAG" ]]; then
+            echo "Tag $RELEASE_TAG does not match manifest version $manifest_version" >&2
+            exit 1
+          fi
+
+          git fetch --no-tags origin main
+          tag_commit="$(git rev-list -n 1 "$RELEASE_TAG")"
+          if ! git merge-base --is-ancestor "$tag_commit" origin/main; then
+            echo "Release tags must point to a commit contained in origin/main" >&2
+            exit 1
+          fi
+
+  test:
+    name: Python and MCP tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Python dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Validate manifest and Skill entrypoints
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          manifest = json.loads(Path('.codex-plugin/plugin.json').read_text())
+          assert manifest['name'] == 'researching-plugin'
+          assert manifest['version']
+          assert manifest['skills'] == './skills/'
+
+          for skill in (
+              'using-researching',
+              'researching-paper-searching',
+              'advance-research',
+          ):
+              path = Path('skills', skill, 'SKILL.md')
+              text = path.read_text()
+              assert text.startswith('---\n'), path
+              assert f'name: {skill}' in text, path
+              assert 'description:' in text, path
+          PY
+
+      - name: Run Python tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Run MCP tests
+        run: node --test mcp/server.test.mjs
+
+  release-tag:
+    name: Release tag
+    needs:
+      - policy
+      - test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine whether the manifest version should be tagged
+        id: release
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import re
+          import subprocess
+          from pathlib import Path
+
+          manifest_path = '.codex-plugin/plugin.json'
+          semver_pattern = re.compile(
+              r'^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)'
+              r'(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$'
+          )
+
+          def parse_semver(value: str):
+              match = semver_pattern.fullmatch(value)
+              if not match:
+                  raise SystemExit(f'manifest version is not strict SemVer: {value}')
+              major, minor, patch = (int(match.group(index)) for index in range(1, 4))
+              prerelease = match.group(4)
+              identifiers = None if prerelease is None else prerelease.split('.')
+              for identifier in identifiers or ():
+                  if identifier.isdigit() and len(identifier) > 1 and identifier[0] == '0':
+                      raise SystemExit(
+                          f'numeric prerelease identifiers must not have leading zeros: {value}'
+                      )
+              return major, minor, patch, identifiers
+
+          def compare(left, right):
+              left_core, right_core = left[:3], right[:3]
+              if left_core != right_core:
+                  return 1 if left_core > right_core else -1
+              left_pre, right_pre = left[3], right[3]
+              if left_pre is None or right_pre is None:
+                  if left_pre is right_pre:
+                      return 0
+                  return 1 if left_pre is None else -1
+              for left_id, right_id in zip(left_pre, right_pre):
+                  if left_id == right_id:
+                      continue
+                  left_numeric, right_numeric = left_id.isdigit(), right_id.isdigit()
+                  if left_numeric and right_numeric:
+                      return 1 if int(left_id) > int(right_id) else -1
+                  if left_numeric != right_numeric:
+                      return -1 if left_numeric else 1
+                  return 1 if left_id > right_id else -1
+              if len(left_pre) == len(right_pre):
+                  return 0
+              return 1 if len(left_pre) > len(right_pre) else -1
+
+          current_version = json.loads(Path(manifest_path).read_text())['version']
+          current_semver = parse_semver(current_version)
+          before_sha = os.environ['BEFORE_SHA']
+          previous_version = None
+
+          if before_sha and set(before_sha) != {'0'}:
+              try:
+                  previous_manifest = subprocess.check_output(
+                      ['git', 'show', f'{before_sha}:{manifest_path}'],
+                      text=True,
+                  )
+              except subprocess.CalledProcessError:
+                  previous_manifest = None
+              if previous_manifest:
+                  previous_version = json.loads(previous_manifest)['version']
+
+          should_tag = previous_version != current_version
+          if previous_version is not None and should_tag:
+              previous_semver = parse_semver(previous_version)
+              if compare(current_semver, previous_semver) <= 0:
+                  raise SystemExit(
+                      f'manifest version must increase: {previous_version} -> {current_version}'
+                  )
+
+          tag = f'v{current_version}'
+          existing_tag = subprocess.run(
+              ['git', 'rev-parse', '--verify', '--quiet', f'refs/tags/{tag}'],
+              check=False,
+              capture_output=True,
+              text=True,
+          )
+          if existing_tag.returncode == 0:
+              tag_commit = subprocess.check_output(
+                  ['git', 'rev-list', '-n', '1', tag],
+                  text=True,
+              ).strip()
+              head_commit = subprocess.check_output(
+                  ['git', 'rev-parse', 'HEAD'],
+                  text=True,
+              ).strip()
+              if tag_commit != head_commit:
+                  raise SystemExit(f'{tag} already exists on a different commit')
+              should_tag = False
+
+          output_path = Path(os.environ['GITHUB_OUTPUT'])
+          with output_path.open('a') as output:
+              output.write(f'tag={tag}\n')
+              output.write(f'should_tag={str(should_tag).lower()}\n')
+
+          if should_tag:
+              print(f'{previous_version or "no previous version"} -> {current_version}: create {tag}')
+          else:
+              print(f'No new release tag required for {current_version}')
+          PY
+
+      - name: Create annotated release tag
+        if: steps.release.outputs.should_tag == 'true'
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag --annotate "$RELEASE_TAG" --message "Release $RELEASE_TAG"
+          git push origin "refs/tags/$RELEASE_TAG"
