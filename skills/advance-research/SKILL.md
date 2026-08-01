@@ -1,6 +1,6 @@
 ---
 name: advance-research
-description: Use when a researcher needs to frame a rough question, understand a field, synthesize literature, build a concept and evidence map, compare research directions, expose resource or data gaps, or decide what research step to take next. Default to a cross-disciplinary, human-supervised research brief and decision checkpoint; do not assume a local experiment is possible or authorized. Experiment planning and execution are optional downstream branches requiring separate explicit human approvals. Route paper discovery gaps to researching-paper-searching.
+description: Use when a researcher needs to frame a rough question, understand a field, resume project-local paper records, synthesize literature, build a concept and evidence map, compare research directions, expose resource or data gaps, or decide what research step to take next. Default to a cross-disciplinary, human-supervised research brief and decision checkpoint; do not assume a local experiment is possible or authorized. Experiment planning and execution are optional downstream branches requiring separate explicit human approvals. Route paper discovery gaps to researching-paper-searching.
 ---
 
 # Advance Research
@@ -104,6 +104,32 @@ an unrelated local or synthetic experiment.
 - Preserve failed searches, inaccessible sources, tool gaps, and negative findings.
 - Do not turn absence of evidence into novelty or feasibility.
 - Do not let a polished narrative conceal a missing human decision.
+
+## Refresh project-local paper memory
+
+When the active research folder contains `papers/index.md`, use it as a compact
+router into durable paper records. Read
+[the project-local paper memory contract](../../references/paper-memory.md)
+before managing or refreshing those records. This mechanism is independent of
+durable research state and does not require a new state-machine transition.
+
+Reload paper memory on research events, not fixed turn counts:
+
+- on resume, read the index and the `30-second recall` plus `Open questions` of
+  records relevant to the active question;
+- after a material question, scope, comparison, population, data, or evaluation
+  change, reselect relevant records from the index;
+- on a stage change, reload results and conflicts for evidence synthesis,
+  methods and limitations for route or protocol design, and proposition rows
+  plus locators for writing or claim review;
+- before stating what literature establishes, reload the relevant record and
+  return to the located PDF page when the record is incomplete or disputed;
+- after adding a paper or finding a conflict, reload related older records and
+  update their cross-paper relationship.
+
+Use progressive depth: `papers/index.md`, then the short recall, then relevant
+record sections, then located PDF pages. Do not load the entire paper collection
+on every research turn, and do not treat rereading as a decision-log event.
 
 ## Maintain durable state only when needed
 

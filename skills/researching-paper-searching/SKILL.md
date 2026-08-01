@@ -1,6 +1,6 @@
 ---
 name: researching-paper-searching
-description: Use when a user asks for papers in a field, related work, a known paper, scholarly evidence during another task, metadata or abstracts from closed publications, open-access locations, institutional access checks, authorized PDF retrieval, or arXiv search and reading through alphaXiv.
+description: Use when a user asks for papers in a field, related work, a known paper, scholarly evidence during another task, metadata or abstracts from closed publications, open-access locations, institutional access checks, authorized PDF retrieval, project-local PDF decomposition and Markdown paper records, or arXiv search and reading through alphaXiv.
 ---
 
 # Researching Paper Searching
@@ -87,6 +87,26 @@ manifest, and download only the selected accessible files. Never bypass access
 controls, replay SAML assertions, fabricate institutional attributes, evade
 rate limits, or treat cached credentials as permission to download everything.
 
+## Persist downloaded papers in the research folder
+
+When the user downloads a selected PDF for an active project, store it under the
+researcher-selected `<folder>/pdf/`, never under the installed Plugin directory.
+Reuse the active research workspace when one is already established. If this
+Skill was invoked directly and no folder is known, finish discovery but ask for
+the destination before downloading.
+
+After download, read
+[the project-local paper memory contract](../../references/paper-memory.md) and
+run the bundled `scripts/prepare_paper.py` against the downloaded file. Inspect
+the page-mapped extraction and visually check PDF pages carrying layout,
+figures, tables, equations, or otherwise claim-relevant content. Complete the
+durable `papers/<paper-id>.md` record and update its row in `papers/index.md`.
+
+Return the paper ID, original PDF path, extracted Markdown path, durable record
+path, extraction warnings, and any pages that still require visual or OCR
+inspection. The record is a reading aid; only promote a proposition to an
+Evidence Packet after checking its source depth and PDF locator.
+
 ## Use alphaXiv MCP
 
 Prefer these read-oriented `alphaxiv-arxiv` tools:
@@ -130,7 +150,8 @@ Report:
 3. why each selected paper is relevant;
 4. access state and the legal full-text route, when known;
 5. provider failures or coverage limits;
-6. the next action: read, refine, authenticate, or download.
+6. project-local PDF and Markdown paths after a download;
+7. the next action: read, refine, authenticate, download, or inspect.
 
 When this skill was called from another workflow, return the selected evidence
 in a form that the caller can immediately use and then resume that workflow.
