@@ -15,6 +15,7 @@ Researching Plugin 是一个面向科研任务的 Codex 插件。它把“找论
 
 - 先建立可信的研究问题和证据边界，再讨论实现或实验。
 - 将论文身份、公开元数据、开放获取、机构认证和下载权限分开处理。
+- 将下载的 PDF 保存在科研目录，并生成可按阶段重复读取的 Markdown 论文记录。
 - 让实验、仿真、田野观察、档案研究、专家咨询、数据获取和理论分析成为平级路线。
 - 在范围、方向、方案、执行和最终主张上保留明确的人类决策权。
 - 保留失败检索、访问限制、能力缺口、冲突证据和研究过程记录。
@@ -28,7 +29,7 @@ Researching Plugin 是一个面向科研任务的 Codex 插件。它把“找论
 | Skill | 负责内容 |
 |---|---|
 | `using-researching` | 插件入口；识别任务阶段并路由到合适的子 Skill |
-| `researching-paper-searching` | 文献发现、排序、论文阅读、访问状态解析和证据回传 |
+| `researching-paper-searching` | 文献发现、访问解析、授权下载和项目内 Markdown 论文记录 |
 | `advance-research` | 研究问题构建、证据综合、能力地图、路线比较和人类检查点 |
 
 已加载插件后，可以直接调用：
@@ -114,7 +115,29 @@ Unpaywall，也不应被描述为官方 arXiv API。
 > MCP 当前只封装 alphaXiv。Crossref、OpenAlex 和 Unpaywall 是本地 Python
 > provider/resolver，不是 MCP 工具。
 
-### 4. 研究简报和路线构建
+### 4. 项目内 PDF 与论文记忆
+
+当用户为科研项目下载论文时，Plugin 将原始 PDF 与安装目录分离：
+
+```text
+<folder>/
+├── pdf/<paper-id>.pdf
+└── papers/
+    ├── index.md
+    ├── <paper-id>.md
+    └── .extracted/<paper-id>.md
+```
+
+`scripts/prepare_paper.py` 使用 PyMuPDF 按 PDF 页码生成机器抽取 Markdown，创建
+不会覆盖既有笔记的论文记录模板，并初始化轻量论文索引。机器抽取只用于导航；
+公式、图表、表格、复杂版式和主张级内容仍需回到原 PDF 视觉核验。
+
+科研推进不会在每轮加载全部论文，而按事件重复读取：恢复任务时先读索引，问题或
+阶段变化时重新选择相关记录，形成文献性主张前重读命题和 locator，遇到冲突或
+记录不足时回到原 PDF 页面。论文 Markdown 是长期阅读记忆，不会自动升级为
+Evidence Packet。
+
+### 5. 研究简报和路线构建
 
 `advance-research` 默认执行基础研究循环：
 
@@ -137,7 +160,7 @@ Unpaywall，也不应被描述为官方 arXiv API。
 - 研究路线组合；
 - 推荐意见和一个明确的人类决策请求。
 
-### 5. Evidence Packet 与研究状态
+### 6. Evidence Packet 与研究状态
 
 Evidence Packet 将来源和科学主张分开记录，主要字段包括：
 
@@ -167,7 +190,7 @@ experiments/
 其中 `research_state.json` 是规范状态；Evidence Packet 和决策日志保持
 append-only；每次正式更新前保存 revision checkpoint。
 
-### 6. 人类监督 Gate
+### 7. 人类监督 Gate
 
 | Gate | 人类需要决定什么 | 不代表什么 |
 |---|---|---|
@@ -181,7 +204,7 @@ append-only；每次正式更新前保存 revision checkpoint。
 “调研一下”“做一个 demo”“进行第一阶段”“继续”等表述默认只授权研究构建，
 不构成实验执行授权。
 
-### 7. 凭据和认证状态基础组件
+### 8. 凭据和认证状态基础组件
 
 本地认证模块已经实现以下基础能力：
 
@@ -205,8 +228,10 @@ flowchart TD
     C --> E["问题与能力地图"]
     E --> F{"存在证据缺口？"}
     F -- "是" --> D
-    D --> G["论文、访问状态与 Evidence Packet"]
-    G --> C
+    D --> G["论文、访问状态与项目内 PDF"]
+    G --> N["页级抽取与 Markdown 论文记录"]
+    N --> O["按阶段重读并核验 locator"]
+    O --> C
     F -- "否" --> H["研究路线组合"]
     H --> I["Direction Gate"]
     I -- "修改问题或补证据" --> C
@@ -224,11 +249,13 @@ flowchart TD
 ```text
 researching-plugin/
 ├── README.md
-├── requirements.txt                 # 可选认证组件的 Python 依赖
+├── requirements.txt                 # PDF 处理与可选认证组件的 Python 依赖
 ├── .codex-plugin/plugin.json
 ├── .mcp.json
 ├── mcp/                             # alphaXiv 惰性只读 bridge
-├── scripts/discover.py              # 自举式匿名发现 CLI
+├── scripts/
+│   ├── discover.py                  # 自举式匿名发现 CLI
+│   └── prepare_paper.py             # 项目内 PDF 页级抽取与 Markdown 初始化
 ├── runtime/python/
 │   └── researching_skill_runtime/
 │       ├── domain/                  # PaperRecord、AccessStatus
@@ -268,6 +295,13 @@ Plugin release。
 ```text
 使用 $researching-paper-searching，查找 tokenization parallel 与 regex
 pre-compilation 性能影响的论文，并说明每篇论文能支持哪个命题。
+```
+
+下载并建立项目内论文记录：
+
+```text
+使用 $researching-paper-searching，将选中的开放获取论文下载到当前科研目录的
+pdf/，完成页级拆解并生成 papers/ 下的 Markdown 记录。
 ```
 
 直接构建研究方向：

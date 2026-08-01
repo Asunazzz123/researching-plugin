@@ -1,7 +1,7 @@
 {
   "name": "researching-plugin",
-  "version": "0.6.0",
-  "description": "Route research tasks into literature discovery, evidence synthesis, cross-disciplinary research briefs, human-supervised direction selection, and optional authorized planning or execution workflows.",
+  "version": "0.7.0",
+  "description": "Route research tasks into literature discovery, project-local PDF records, evidence synthesis, cross-disciplinary research briefs, human-supervised direction selection, and optional authorized planning or execution workflows.",
   "author": {
     "name": "Asuna",
     "url": "https://github.com/Asunazzz123"
@@ -11,6 +11,8 @@
   "keywords": [
     "academic-research",
     "paper-search",
+    "paper-memory",
+    "pdf",
     "arxiv",
     "alphaxiv",
     "mcp",
@@ -23,7 +25,7 @@
   "interface": {
     "displayName": "Researching",
     "shortDescription": "Build evidence-grounded, human-supervised research directions",
-    "longDescription": "Routes research tasks to focused literature discovery, evidence grounding, cross-disciplinary concept and capability mapping, research-route comparison, human decision checkpoints, and optional separately authorized planning or execution.",
+    "longDescription": "Routes research tasks to focused literature discovery, project-local PDF decomposition and Markdown records, evidence grounding, cross-disciplinary concept and capability mapping, research-route comparison, human decision checkpoints, and optional separately authorized planning or execution.",
     "developerName": "Asuna",
     "category": "Education",
     "capabilities": [
@@ -34,7 +36,7 @@
     "websiteURL": "https://github.com/Asunazzz123/researching-plugin",
     "defaultPrompt": [
       "Use the researching workflow to find papers for my current task.",
-      "Find a paper, determine how I can access it, and extract relevant evidence.",
+      "Find a paper, save its authorized PDF in my research folder, and create a Markdown record.",
       "Turn my rough question into a research brief with feasible routes and a human decision checkpoint."
     ],
     "brandColor": "#B31B1B"

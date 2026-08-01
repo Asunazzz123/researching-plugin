@@ -1,6 +1,6 @@
 ---
 name: using-researching
-description: Use when a task may require scholarly evidence, literature discovery, or help advancing a research question, hypothesis, experiment, result, or claim, and the correct focused research subskill needs to be selected.
+description: Use when a task may require scholarly evidence, literature discovery, project-local paper records, or help advancing a research question, hypothesis, experiment, result, or claim, and the correct focused research subskill needs to be selected.
 ---
 
 # Using Researching
@@ -15,7 +15,8 @@ invocable:
 
 - `$researching-paper-searching`: discover, rank, inspect, resolve access to, and
   retrieve papers across arXiv, public scholarly indexes, open-access locations,
-  and user-authorized subscription sessions.
+  and user-authorized subscription sessions; downloaded project papers are
+  decomposed into project-local Markdown records.
 - `$advance-research`: frame a cross-disciplinary question, synthesize evidence,
   map concepts and capability gaps, compare research routes, and prepare a
   human decision checkpoint. Experiment planning and execution are optional,
@@ -61,6 +62,11 @@ is available.
 When `$advance-research` exposes a literature evidence gap, invoke
 `$researching-paper-searching` with the exact proposition and required source
 depth, then return Evidence Packets to the same research cycle.
+
+When paper search downloads a PDF, pass its paper ID, project-local PDF path,
+record path, and extraction warnings back to `$advance-research`. When resuming
+a folder that already contains `papers/index.md`, let `$advance-research` reload
+the relevant records before continuing synthesis, route comparison, or claims.
 
 Keep the parent task active after a child completes. Feed selected papers,
 Evidence Packets, hypotheses, or decisions back into the stage that requested

@@ -1,7 +1,7 @@
 interface:
   display_name: "Paper Searching"
-  short_description: "Find papers, resolve access, and retrieve authorized text"
-  default_prompt: "Use $researching-paper-searching to find and access papers relevant to my current research context."
+  short_description: "Find papers, resolve access, and record project PDFs"
+  default_prompt: "Use $researching-paper-searching to find and access papers relevant to my current research context, then record downloaded PDFs in my research folder."
 
 policy:
   allow_implicit_invocation: true
