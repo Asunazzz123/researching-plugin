@@ -1,6 +1,6 @@
 ---
 name: using-researching
-description: Use when a task may require scholarly evidence, literature discovery, project-local paper records, or help advancing a research question, hypothesis, experiment, result, or claim, and the correct focused research subskill needs to be selected.
+description: Use when a task may require scholarly evidence, literature discovery, project-local paper records, or help advancing a research question, route, task, observation, interpretation, or claim, and the correct focused research subskill needs to be selected.
 ---
 
 # Using Researching
@@ -17,10 +17,11 @@ invocable:
   retrieve papers across arXiv, public scholarly indexes, open-access locations,
   and user-authorized subscription sessions; downloaded project papers are
   decomposed into project-local Markdown records.
-- `$advance-research`: frame a cross-disciplinary question, synthesize evidence,
-  map concepts and capability gaps, compare research routes, and prepare a
-  human decision checkpoint. Experiment planning and execution are optional,
-  separately approved downstream branches.
+- `$advance-research`: frame a domain-neutral question, synthesize evidence,
+  map concepts and capability gaps, compare research routes, classify Task
+  Nodes with H0-H4, coordinate bounded session-local work, and prepare human
+  checkpoints or handoffs. Consequential planning and execution are separately
+  approved downstream branches.
 
 Installed plugin UIs may group these as `Researching: Paper Searching` and
 `Researching: Advance Research`. Their canonical component names remain
@@ -49,11 +50,11 @@ Use `$advance-research` when any of these conditions holds:
 - The user wants to turn a rough idea into a bounded research question.
 - The task needs a research brief, concept map, competing explanations, route
   portfolio, feasibility analysis, or human-supervised next-step decision.
-- New evidence or experiment results must change the research plan.
+- New evidence, observations, reports, or contradictions must change the research plan.
 - The user asks what to do next, why progress is stalled, or whether a claim is
   justified.
-- A multi-session research project needs checkpoints, gates, and a durable
-  decision log.
+- A multi-session research project needs checkpoints, gates, a Task DAG,
+  Human Handoffs, or a durable decision log.
 
 Default to research construction and stop at the Direction Gate. Do not route a
 broad request to automatic local experimentation merely because code execution
@@ -69,8 +70,9 @@ a folder that already contains `papers/index.md`, let `$advance-research` reload
 the relevant records before continuing synthesis, route comparison, or claims.
 
 Keep the parent task active after a child completes. Feed selected papers,
-Evidence Packets, hypotheses, or decisions back into the stage that requested
-them instead of turning a subskill into an unrelated side task.
+Evidence Packets, working propositions, observations, Reports, or decisions
+back into the stage that requested them instead of turning a subskill into an
+unrelated side task.
 
 ## Dependency gate
 

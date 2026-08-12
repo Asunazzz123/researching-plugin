@@ -42,6 +42,9 @@ method incompatibilities visible.
 
 Provide two to four meaningfully different routes.
 
+Assign stable candidate IDs `RT-001`, `RT-002`, and so on, including in
+one-session deliberation mode, so the human can approve an exact route boundary.
+
 | Route ID | Method family | Uncertainty reduced | Requirements | Validation | Feasibility | Risk |
 |---|---|---|---|---|---|---|
 
@@ -58,9 +61,9 @@ whose output would not reduce a decision-relevant uncertainty. Synthetic or toy
 data may validate software plumbing or a method implementation only; label that
 limited objective and never use it as a proxy for missing domain evidence.
 
-Experiments, simulation, field work, archival research, expert consultation,
-secondary-data analysis, theoretical analysis, and data acquisition are peer
-routes. Do not rank local execution higher by default.
+Concrete method families are project-defined instances rather than core schema
+categories. Do not rank a route higher merely because its tools are locally
+available or its output is easy to produce.
 
 ### 6. Recommendation and human checkpoint
 
@@ -80,21 +83,21 @@ Record searches, source inspection, access failures, tool gaps, assumptions,
 route changes, and human decisions. Do not inflate the ledger with routine
 internal reasoning that did not affect the research decision.
 
-## Cross-domain capability-gap examples
+## Capability-gap patterns
 
-Apply one capability model across disciplines:
+Apply one orthogonal capability model across research settings:
 
-- geospatial work may require target layers, CRS, resolution, ground truth,
-  licensing, data lineage, and a specific geoprocessing environment;
-- clinical or social research may require governed populations, consent,
-  privacy controls, ethics review, and authorized data access;
-- field, ecological, archaeological, or qualitative research may require site
-  access, sampling design, local context, interviews, or archival permission;
-- wet-lab, hardware, and physical science may require instruments, calibration,
-  materials, safety procedures, and environmental controls;
-- proprietary-data research may require subscription entitlements, secure
-  compute, contractual limits, and domain-specific validation.
+- governed human or sensitive material may require consent, privacy controls,
+  ethics review, institutional responsibility, and authorized access;
+- direct observation may require site access, sampling or case-selection rules,
+  local context, trained observers, and a deviation log;
+- physical interaction may require equipment, calibration, materials, safety
+  procedures, environmental controls, and accountable operators;
+- controlled or proprietary sources may require entitlements, secure compute,
+  contractual limits, source lineage, and domain-specific validation;
+- abstract or computational work may still require specialist judgment,
+  independently checked derivations, software, compute, or external replication.
 
 When any required capability is absent, propose acquisition, collaboration,
-remote execution, or protocol routes. Do not replace it with an unrelated local
-experiment simply because local execution is available.
+remote execution, or a revised protocol. Do not replace it with an unrelated
+local proxy merely because that proxy is executable.

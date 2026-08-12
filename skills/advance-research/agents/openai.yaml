@@ -1,7 +1,7 @@
 interface:
   display_name: "Advance Research"
-  short_description: "Refresh paper memory and build a research direction"
-  default_prompt: "Use $advance-research to refresh relevant project paper records, frame my question, synthesize evidence, compare feasible research routes, and stop for my direction before planning or execution."
+  short_description: "Coordinate human-supervised research tasks"
+  default_prompt: "Use $advance-research to frame my question, compare routes, coordinate bounded parallel tasks, and stop at the required human checkpoints."
 
 policy:
   allow_implicit_invocation: true

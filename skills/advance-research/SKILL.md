@@ -1,148 +1,135 @@
 ---
 name: advance-research
-description: Use when a researcher needs to frame a rough question, understand a field, resume project-local paper records, synthesize literature, build a concept and evidence map, compare research directions, expose resource or data gaps, or decide what research step to take next. Default to a cross-disciplinary, human-supervised research brief and decision checkpoint; do not assume a local experiment is possible or authorized. Experiment planning and execution are optional downstream branches requiring separate explicit human approvals. Route paper discovery gaps to researching-paper-searching.
+description: Use when a researcher needs to frame a question, synthesize evidence, compare research routes, maintain a durable human-supervised research project, classify tasks by required human participation, parallelize bounded research work through sub-agents, resume human handoffs, or decide what research step to take next. Default to a research brief and Direction Gate; never infer authorization for consequential execution or final claims. Route literature gaps to researching-paper-searching.
 ---
 
 # Advance Research
 
-Build an auditable research understanding and hand consequential judgment back
-to the researcher. Treat experiments as one possible research route, not as the
-default destination.
+Build an auditable evidence-decision cycle. Keep research routes domain-neutral,
+make human participation a first-class execution mode, and treat durable state as
+an audit and coordination aid rather than the research method itself.
 
-## Default outcome
+## Start with the foundational cycle
 
-Produce a **research brief** and a **human decision checkpoint**. The brief must
-answer:
+1. Frame the question, contribution, scope, non-goals, and decision context.
+2. Map epistemic goals, material requirements, and unavailable capabilities.
+3. Identify decision-relevant uncertainties.
+4. Route literature gaps to `$researching-paper-searching` with the proposition,
+   exclusions, terminology, source depth, and intended use.
+5. Convert inspected sources into Evidence Packets; metadata is not claim evidence.
+6. Preserve conflicts, access limits, incompatible scales, and unknowns.
+7. Generate two to four `RT-*` routes described by epistemic goal, open method
+   family, capabilities, executor mix, validation strategy, uncertainty, and risk.
+8. Produce the research brief and stop at the Direction Gate.
 
-1. What is the actual research question and epistemic goal?
-2. What concepts, mechanisms, scales, populations, places, or time periods define it?
-3. What does inspected evidence establish, contradict, or leave unknown?
-4. Which competing explanations or interpretations remain plausible?
-5. Which research routes are available, and what data, tools, access, expertise,
-   ethics review, field work, compute, or external systems does each require?
-6. Which decision must the human make next?
+Read [the research brief contract](references/research-brief-contract.md) before
+writing the brief and [the prompt operators](references/prompt-kinds.md) only as
+needed for the current stage.
 
-Read [references/research-brief-contract.md](references/research-brief-contract.md)
-before writing the brief. Do not run an experiment merely because the current
-machine can run one.
+For a project with `papers/index.md`, reload paper memory on resume, after a
+stage or question change, when a conflict appears, and before stating what literature establishes.
+These are evidence events, not fixed turn counts. Read
+the selected paper records first and return to the original PDF locator when a
+detailed claim depends on layout, equations, figures, tables, or extraction quality.
 
 ## Choose the operating mode
 
-Use **deliberation mode by default**:
+Use deliberation mode for a one-off brief. Do not create durable state merely
+because local tools are available.
 
-- perform read-only domain mapping, terminology expansion, source discovery,
-  evidence synthesis, contradiction analysis, and feasibility assessment;
-- represent experiments, simulation, field observation, archival work, expert
-  consultation, data acquisition, and theoretical analysis as peer research routes;
-- stop after presenting route options and the decision packet.
+Use durable mode for a multi-session project, requested checkpoints, human
+handoffs, or parallel task coordination. Validate an existing workspace first;
+schema v2 does not auto-migrate older workspaces. Read:
 
-Use **durable mode** when the user requests artifacts, checkpoints, or a
-multi-session project. Resume an existing `research_state.json`; otherwise
-initialize a scoped workspace. Read
-[references/state-contract.md](references/state-contract.md) before updates.
+- [state contract](references/state-contract.md);
+- [task and human-level contract](references/task-node-contract.md);
+- [sub-agent report contract](references/subagent-report-contract.md);
+- [parallelization policy](references/parallelization-policy.md);
+- [human checkpoints](references/human-checkpoints.md).
 
-Use the **planning branch** only after the human selects a route. Use the
-**execution branch** only after the human separately authorizes the exact plan
-and its side effects. Read [references/human-checkpoints.md](references/human-checkpoints.md)
-before treating any user message as approval.
+Commit canonical state only through the main-agent writer. Never hand-edit
+`research_state.json`, `evidence.jsonl`, or `decisions.jsonl`.
 
-## Run the foundational research cycle
+## Classify human participation per task
 
-1. Frame the question, intended contribution, scope, non-goals, and decision context.
-2. Map the domain's epistemic mode and material requirements. Do not assume all
-   fields use controlled local experiments.
-3. Identify the largest decision-relevant uncertainties.
-4. Load only the needed operator from
-   [references/prompt-kinds.md](references/prompt-kinds.md).
-5. Route literature gaps to `$researching-paper-searching`; include the exact
-   proposition, exclusions, terminology, source depth, and intended use.
-6. Convert inspected sources into Evidence Packets. Metadata is not claim evidence.
-7. Build a concept/evidence map and preserve disagreement, missing data, access
-   limits, incompatible scales, and method assumptions.
-8. Generate two to four meaningfully different research routes. For each route,
-   state information gain, decision relevance, required resources, feasibility,
-   risks, validation strategy, and what cannot be done in the current environment.
-9. Recommend a route only as a reasoned proposal. Present a human checkpoint and stop.
+- `H0`: autonomous, deterministic or reproducibly checked work.
+- `H1`: batch work whose candidates are reviewed by summary or sampling.
+- `H2`: candidate generation that must stop for a human checkpoint.
+- `H3`: collaborative work requiring recurring human or expert judgment.
+- `H4`: human authority or execution involving ethics, law, physical action,
+  institutional responsibility, or final scientific claims.
 
-The cheapest next step may be another source search, obtaining missing data or
-measurements, resolving a domain convention, requesting access, interviewing an
-expert, checking an archive, inspecting an existing dataset, running a
-simulation, or designing an experiment. Never equate “cheap” with “locally executable.”
+Classify the action, not the discipline. Upgrade the level when uncertainty,
+risk, tacit knowledge, access, or consequences increase. Never lower a recorded
+level without an explicit human override in state.
 
-## Keep execution optional and explicit
+## Orchestrate bounded sub-agent work
 
-Do not infer execution authorization from requests such as “research this,”
-“investigate,” “make a demo,” “propose an implementation,” or “do the first
-stage.” These authorize research construction, not an unreviewed experiment.
+Use sub-agents only when two or more independent tasks justify the coordination
+overhead. Keep the main agent as the sole scheduler and writer.
 
-Interpret a first-stage or framework demo as a demonstration of the research
-brief, evidence map, route portfolio, and human checkpoint. Do not silently turn
-it into a toy or synthetic-data experiment. Synthetic data are a valid route
-only when the selected question concerns pipeline correctness, method behavior,
-or pedagogy; they cannot establish substantive feasibility, identification,
-external validity, or domain conclusions.
+1. Create Task Nodes as a DAG in a candidate state.
+2. Prepare each task's frozen Context Packet:
 
-For an empirical route:
+   ```bash
+   python <skill-directory>/scripts/manage_tasks.py context <workspace> <task-id> --prepare
+   ```
 
-1. require the human to select the route at the Direction Gate;
-2. design a protocol without executing it;
-3. require approval of the exact protocol at the Plan Gate;
-4. disclose commands, external writes, data use, cost, duration, and expected artifacts;
-5. require a second explicit authorization at the Execution Gate;
-6. return to the human if the plan changes materially.
+3. Select the deterministic non-conflicting frontier:
 
-Across disciplines, unavailable target data, populations, sites, instruments,
-archives, licensed systems, governed environments, or domain expertise require
-a capability-acquisition and validation plan. Record the gap; do not substitute
-an unrelated local or synthetic experiment.
+   ```bash
+   python <skill-directory>/scripts/manage_tasks.py frontier <workspace> --max-parallel 3
+   ```
 
-## Preserve evidence and process integrity
+4. Mark only the selected batch running:
 
-- Separate observation, evidence, interpretation, hypothesis, route, plan, and claim.
-- Require locators for detailed source claims and record access depth.
-- Label assumptions, limitations, failure conditions, and transfer boundaries.
-- Preserve failed searches, inaccessible sources, tool gaps, and negative findings.
-- Do not turn absence of evidence into novelty or feasibility.
-- Do not let a polished narrative conceal a missing human decision.
+   ```bash
+   python <skill-directory>/scripts/manage_tasks.py start <workspace> <task-id> [<task-id> ...]
+   ```
 
-## Refresh project-local paper memory
+5. When sub-agent tools are available, dispatch at most three selected tasks.
+   Give each agent only its `context.json`, require the report schema, forbid
+   nested sub-agents, and restrict writes to that task's write scope.
+6. Without sub-agent tools, execute the same frontier sequentially without
+   changing task or report semantics.
+7. Validate and merge each completed H0/H1 report:
 
-When the active research folder contains `papers/index.md`, use it as a compact
-router into durable paper records. Read
-[the project-local paper memory contract](../../references/paper-memory.md)
-before managing or refreshing those records. This mechanism is independent of
-durable research state and does not require a new state-machine transition.
+   ```bash
+   python <skill-directory>/scripts/manage_tasks.py validate-report <workspace> <report.json>
+   python <skill-directory>/scripts/manage_tasks.py merge-report <workspace> <report.json>
+   ```
 
-Reload paper memory on research events, not fixed turn counts:
-
-- on resume, read the index and the `30-second recall` plus `Open questions` of
-  records relevant to the active question;
-- after a material question, scope, comparison, population, data, or evaluation
-  change, reselect relevant records from the index;
-- on a stage change, reload results and conflicts for evidence synthesis,
-  methods and limitations for route or protocol design, and proposition rows
-  plus locators for writing or claim review;
-- before stating what literature establishes, reload the relevant record and
-  return to the located PDF page when the record is incomplete or disputed;
-- after adding a paper or finding a conflict, reload related older records and
-  update their cross-paper relationship.
-
-Use progressive depth: `papers/index.md`, then the short recall, then relevant
-record sections, then located PDF pages. Do not load the entire paper collection
-on every research turn, and do not treat rereading as a decision-log event.
-
-## Maintain durable state only when needed
-
-Validate an existing workspace before reasoning:
+H2 reports remain candidates for a human checkpoint. H3/H4 tasks do not enter
+the automatic frontier; render a Human Handoff and stop for the required input:
 
 ```bash
-python scripts/validate_state.py <workspace>
+python <skill-directory>/scripts/manage_tasks.py handoff <workspace> <task-id>
 ```
 
-Commit candidate state only through `scripts/update_state.py`; never edit
-canonical state or append-only logs by hand. The state harness is an audit aid,
-not the research method itself. A one-off brief does not need a state machine
-unless the user requests persistent tracking.
+## Preserve consistency
 
-Stop at the Direction Gate by default. Completion of a research brief means the
-decision is ready for the human; it does not mean the scientific project is complete.
+- Let sub-agents report observations, evidence candidates, claim candidates,
+  contradictions, unknowns, limitations, artifacts, and next actions separately.
+- Merge records, not persuasive prose. Assign canonical IDs only in the reducer.
+- Accept an older global revision only when the task-local context hash is still
+  current; otherwise retain the report and mark the task `needs_rework`.
+- Deduplicate by source lineage, not agent count. Preserve contradictory evidence
+  in the conflict registry; agreement among agents is not independent evidence.
+- Treat agent-created claims as `candidate`. Only the human Claim Gate can close
+  a bounded claim set.
+
+## Keep execution explicit
+
+Direction approval authorizes planning only. Plan approval freezes the reviewed
+protocol but does not authorize execution. Execution approval must identify the
+commands or action class, external writes, data movement, costs, risks, duration,
+and expected artifacts. A material protocol change resets Plan and Execution
+approval.
+
+Requests such as “research,” “investigate,” “make a demo,” “do the first stage,”
+or “continue” do not authorize consequential execution. Missing data, access,
+instruments, environments, expertise, permissions, or human practice require a
+capability or handoff route, not a scientifically unrelated local substitute.
+
+Stop at the Direction Gate by default. A completed brief means the decision is
+ready for the researcher; it does not mean the scientific project is complete.

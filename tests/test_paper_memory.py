@@ -140,7 +140,7 @@ class PaperMemoryContractTests(unittest.TestCase):
             (PLUGIN_ROOT / ".codex-plugin" / "plugin.json").read_text()
         )
 
-        self.assertEqual(manifest["version"], "0.7.0")
+        self.assertEqual(manifest["version"], "1.0.0")
         self.assertTrue((PLUGIN_ROOT / "references" / "paper-memory.md").is_file())
         self.assertTrue((PLUGIN_ROOT / "scripts" / "prepare_paper.py").is_file())
 

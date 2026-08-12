@@ -50,12 +50,13 @@ general request to continue researching.
 
 ## Plan Gate
 
-Use only after the Direction Gate selects an empirical or otherwise
-consequential route.
+Use after the Direction Gate selects any route that needs a reproducible
+protocol or consequential action.
 
 - Design the protocol without executing it.
-- Declare inputs, variables or observations, baselines, controls, sampling,
-  validation, primary outputs, budget, stop conditions, and artifact paths.
+- Declare inputs, observations or decisions, sampling or case selection,
+  comparison logic where applicable, validation, primary outputs, budget, stop
+  conditions, and artifact paths.
 - Disclose unavailable capabilities and external dependencies.
 - Ask the human to approve the exact plan.
 
@@ -64,7 +65,7 @@ Plan approval authorizes planning completion, not execution.
 ## Execution Gate
 
 Require a separate explicit authorization after Plan Gate approval and before
-`piloting` or `experimenting`.
+any consequential protocol action.
 
 - Show the exact action class: commands, data transfer, external writes, API
   calls, cost, duration, privacy or ethics implications, and expected artifacts.
@@ -80,7 +81,7 @@ scientifically unrelated local substitute.
 
 ## Interpretation and Claim Gate
 
-After any observation or authorized execution:
+After any observation, returned Human Handoff, or authorized execution:
 
 - separate direct observations from interpretation;
 - compare outcomes with predeclared expectations;
@@ -90,3 +91,13 @@ After any observation or authorized execution:
 - ask the human to approve the final bounded claim set.
 
 Reaching a time or iteration limit is a stop condition, not scientific completion.
+
+## Task-level human participation
+
+H0-H4 levels classify individual Task Nodes; they do not replace the five
+top-level gates. H0/H1 reports may be validated and reduced into candidate
+records. H2 can generate alternatives but cannot select or merge them without
+the named checkpoint. H3/H4 pause as a Human Handoff, and H4 always requires a
+human authority. A task may automatically move to a higher level when risk or
+context demands it. Lowering a level requires an explicit human decision and a
+recorded reason.
