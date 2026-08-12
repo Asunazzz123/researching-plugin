@@ -1,211 +1,168 @@
 # Prompt operators
 
 Load only the operator needed by the current research state. Treat each operator
-as a pure transformation from inspected inputs to a research brief section or
-structured candidate records. Operators do not grant execution authority.
+as a pure transformation from inspected inputs to candidate records or a
+research-brief section. Operators never approve a gate, mutate canonical state,
+or grant execution authority.
 
 ## Shared contract
 
-Provide the operator with:
+Provide:
 
-- the current question, scope, non-goals, and constraints;
-- relevant Evidence, Hypothesis, Experiment, and Result IDs;
-- artifact contents needed for this decision;
-- the specific uncertainty being reduced.
-- the domain's epistemic mode and known material constraints;
-- the current human checkpoint and any explicitly selected route IDs.
+- the bounded question, scope, non-goals, constraints, and glossary;
+- relevant `U-*`, `E-*`, `C-*`, `AR-*`, `RT-*`, `WP-*`, `PR-*`, and `O-*` IDs;
+- only the artifacts needed for this task;
+- the target uncertainty and current human checkpoint;
+- the frozen revision, context hash, output schema, and write scope.
 
-Require it to:
+Require:
 
-- return JSON-compatible state fragments, not a replacement canonical state;
-- cite IDs for every grounded statement;
-- return `unknown` instead of inventing evidence, citations, metrics, or results;
-- separate observation, inference, hypothesis, and claim;
-- state important assumptions and failure conditions;
-- avoid selecting an action only because it is easy or likely to look positive.
-- avoid preferring an action merely because it can run on the current machine.
+- JSON-compatible candidate fragments, never a replacement canonical state;
+- ID-backed grounding and source locators for detailed propositions;
+- `unknown` rather than invented citations, observations, metrics, or results;
+- explicit separation of observations, evidence, inference, and claims;
+- assumptions, limitations, contradictions, and recommended next actions;
+- no preference for a route merely because it can run locally.
 
 ## Frame
 
-Use for `framing` or after a material scope change.
-
-Task:
+Use in `framing` or after a material scope change.
 
 1. Convert the rough idea into one bounded research question.
-2. Identify scope, non-goals, operational variables, constraints, resources, and
-   stop conditions.
-3. List decision-relevant uncertainties rather than generic open questions.
-4. Identify what requires human taste or approval.
+2. Record contribution, scope, non-goals, constraints, resources, and stop
+   conditions.
+3. List decision-relevant uncertainties.
+4. Identify judgments that require human taste or authority.
 
-Return a `project` object, `U-*` uncertainty records, and stop conditions. Do not
-mark Scope Gate approved.
+Return a `project` fragment and `U-*` candidates. Do not approve Scope Gate.
 
-## Map domain and feasibility
+## Map domain and capabilities
 
-Use after framing, especially for cross-disciplinary work or unfamiliar domains.
+Use after framing or when a route exposes missing context.
 
-Task:
+1. Identify the epistemic goal: description, explanation, prediction,
+   evaluation, interpretation, design, or mixed.
+2. Identify relevant units, populations or cases, periods, constructs,
+   measurement or interpretation processes, and conventions.
+3. Inventory data, tools, permissions, equipment, expertise, access, ethics,
+   external systems, time, and compute.
+4. Separate available capabilities from capabilities that must be supplied.
+5. Identify invalid substitutions and proxy risks.
 
-1. Identify whether the intended knowledge is descriptive, explanatory,
-   predictive, interpretive, design-oriented, evaluative, or mixed.
-2. Identify relevant scales, populations, spatial or temporal units, constructs,
-   measurement processes, and domain conventions.
-3. Inventory required data, formats, instruments, software, licenses, expertise,
-   ethics review, field access, remote services, and compute.
-4. Separate capabilities available now from capabilities that must be acquired
-   or supplied by the researcher.
-5. Identify invalid substitutions. A convenient local proxy cannot replace the
-   field's decision-relevant data, population, instrument, archive, licensed
-   system, physical environment, spatial context, or validation process.
-
-Return a `domain_map`, a capability matrix, terminology that needs evidence, and
-material constraints. Do not start implementation or experimentation.
+Return a capability map and terminology needing evidence. Do not start action.
 
 ## Ground
 
-Use for `grounding` or when another stage exposes an evidence gap.
+Use in `grounding` or when another stage exposes an evidence gap.
 
-Task:
+1. Map inspected Evidence Packets to the question.
+2. Separate established context, disagreement, and missing evidence.
+3. Identify nearest prior work or source material needed for comparison.
+4. Produce precise searches for `$researching-paper-searching` where scholarly
+   literature is the relevant source type.
 
-1. Map existing Evidence Packets to the question.
-2. Separate established context, conflicting evidence, and missing evidence.
-3. Identify the nearest prior work needed for novelty comparison.
-4. Produce precise searches for `$researching-paper-searching`.
+Return `G-*` candidates with question, required source depth, decision reason,
+and status. Never convert uninspected search results into Evidence Packets.
 
-Return `G-*` records shaped as:
+## Build working propositions
 
-```json
-{
-  "id": "G-001",
-  "question": "Exact proposition that needs evidence",
-  "required_source_depth": "full_text",
-  "reason": "Which decision or claim depends on it",
-  "status": "open"
-}
-```
+Use when the question benefits from alternative hypotheses, explanations,
+interpretations, models, designs, or provisional judgments.
 
-Do not convert uninspected paper candidates into Evidence Packets.
+1. Generate genuinely distinct alternatives, including a simpler or null
+   account and a plausible artifact or confound where applicable.
+2. State what observations would distinguish or weaken each alternative.
+3. Link supporting and contradicting Evidence IDs.
+4. Identify the smallest information-gaining next step.
 
-## Build explanations or working propositions
-
-Use after grounding when the question benefits from competing explanations.
-Descriptive, interpretive, historical, or design research may instead use
-competing interpretations, models, or propositions; do not force every field
-into a laboratory hypothesis template.
-
-Task:
-
-1. Generate three to five genuinely competing mechanistic explanations.
-2. Include a simpler/null explanation and a plausible artifact or confound.
-3. Give each hypothesis differentiating predictions and falsifiers.
-4. Link supporting and contradicting Evidence IDs.
-5. Identify the cheapest information-gaining step that distinguishes alternatives.
-   It may be literature, data access, expert review, archival work, field
-   observation, simulation, or experiment.
-
-Return `H-*` records following `state-contract.md`. Keep novelty as a bounded
-delta from named nearest work; do not equate missing search results with novelty.
+Return `WP-*` candidates. Do not force every research mode into a laboratory
+hypothesis template.
 
 ## Criticize
 
-Use before experiment approval and before Claim Gate. When possible, run it with
-only the raw state and artifacts, without the proposer’s persuasive narrative.
+Use before a consequential protocol, interpretation choice, or Claim Gate.
+When possible, give the critic raw state and artifacts without the proposer's
+persuasive narrative.
 
-Task:
-
-1. Find the strongest alternative explanation.
-2. Test whether predictions actually distinguish hypotheses.
-3. Identify leakage, confounds, proxy measures, circularity, and metric gaming.
-4. Ask what a positive, negative, and null result would each mean.
-5. Identify claims that exceed source depth or experiment design.
+1. Find the strongest alternative account.
+2. Test whether proposed observations distinguish the alternatives.
+3. Identify leakage, confounds, proxy errors, circularity, selection effects,
+   interpretive overreach, and metric gaming.
+4. State what positive, negative, null, missing, or ambiguous observations mean.
+5. Identify claims that exceed evidence depth or protocol scope.
 
 Return objections with severity, affected IDs, required fix, and whether the
-objection blocks the next gate. Criticism never edits evidence in place.
+objection blocks the next gate. Never overwrite contrary evidence.
 
 ## Develop research routes
 
-Use after domain mapping and grounding, before any implementation plan.
+Use after domain mapping and grounding, before route-specific planning.
 
-Task:
+1. Generate two to four methodologically distinct routes.
+2. For each `RT-*`, fill `epistemic_goal`, open `method_family`,
+   `required_capabilities`, `executor_mix`, `validation_strategy`, and
+   `uncertainty_ids`.
+3. State information value, feasibility, risks, irreversible choices, expected
+   artifacts or observations, and what the route cannot establish.
+4. Reject convenient routes that do not reduce a target uncertainty.
+5. Recommend a route and prepare a Direction Gate packet.
 
-1. Generate two to four methodologically distinct routes rather than variations
-   of one favored method.
-2. Include a non-experimental route when it is scientifically plausible.
-3. For each route, state the uncertainty reduced, expected information gain,
-   decision relevance, required resources, feasibility, risks, ethics/access
-   constraints, validation strategy, and expected artifact.
-4. State what cannot be established by the route.
-5. Reject locally convenient toy or synthetic routes that do not reduce a
-   decision-relevant uncertainty.
-6. Recommend a route with reasons, then prepare a Direction Gate checkpoint.
+Return `RT-*` candidates. Do not select a route for the human.
 
-Return `A-*` route records plus a human decision packet. Do not select a route on
-the human's behalf and do not design an experiment yet.
+## Decompose a route into tasks
+
+Use after a route is selected and its required gate is approved.
+
+1. Decompose the route into `T-*` nodes with explicit dependencies.
+2. Assign `task_kind` by research role and H0-H4 by the nature of the action.
+3. Declare input snapshots, isolated write scopes, resource locks, output
+   contracts, validation, merge strategy, and required gate.
+4. Split H3/H4 work into an explicit Human Handoff plus only those lower-level
+   preparation or verification tasks that are independently safe.
+5. Choose Map-Reduce, Portfolio, Proposer-Critic, Independent Replication, or
+   sequential execution based on epistemic dependence.
+
+Return Task Node candidates. Do not dispatch or edit canonical state.
+
+## Design a protocol
+
+Use after Direction Gate for any route requiring a reproducible action plan.
+
+1. Define purpose, inputs, case or sample selection, observations or decisions,
+   comparisons where applicable, quality controls, validation, and bias log.
+2. Define artifact paths, resource needs, budget, stop and resume conditions.
+3. State which outcomes inform which working propositions and which remain
+   ambiguous.
+4. Separate preparation, pilot or rehearsal, substantive action, and review.
+
+Return a `PR-*` candidate. Do not approve Plan or Execution Gate and do not run it.
 
 ## Synthesize research brief
 
-Use when evidence and route options are sufficient for a human decision.
+Follow `research-brief-contract.md`. Separate inspected evidence, synthesis,
+unknowns, route portfolio, capability gaps, and recommendation. End with one
+explicit human decision request.
 
-Follow `research-brief-contract.md`. Separate established evidence, synthesis,
-unknowns, route options, and recommendation. Include source-access limitations
-and capability gaps. End with one explicit decision request.
+## Interpret observations
 
-## Design optional empirical plan
+Use after a returned report, Human Handoff, failed action, or unexpected event.
 
-Use only after the human selects an empirical route at Direction Gate and at
-least one testable hypothesis or proposition exists.
+1. Inspect the referenced artifacts before summaries.
+2. Record direct observations as `O-*` candidates.
+3. Compare them with predeclared expectations, protocol, and quality criteria.
+4. Record missingness, deviations, implementation threats, and limitations.
+5. Propose bounded Claim candidates without erasing negative evidence.
 
-Task:
-
-1. Choose the smallest experiment with high decision-relevant information gain.
-2. Predeclare variables, baselines, controls, primary metric, budget, and stop
-   conditions.
-3. State which outcome favors which hypothesis and which outcomes are ambiguous.
-4. Define artifact paths before execution.
-5. Separate a pilot from a full experiment.
-
-Return an `EXP-*` record following `state-contract.md`. Do not mark Experiment
-or Execution Gate approved. Do not execute the plan.
-
-## Interpret
-
-Use after any pilot, experiment, failed run, or unexpected observation.
-
-Task:
-
-1. Read raw artifacts before summaries.
-2. Record direct observations and metrics in an `R-*` record.
-3. Compare outcomes with predeclared predictions and stop conditions.
-4. Identify unexpected findings, implementation threats, and limitations.
-5. Propose bounded Claim updates without erasing negative evidence.
-
-Return four labeled groups: `observations`, `inferences`, `claim_updates`, and
-`unknowns`. A failed pipeline is a result about the pipeline, not evidence for or
-against the scientific hypothesis unless the design says otherwise.
+Return `observations`, `evidence_candidates`, `claim_candidates`,
+`contradictions`, `unknowns`, and `limitations`. A failed process is evidence
+about that process unless the protocol justifies a broader inference.
 
 ## Decide next
 
-Use for `deciding`, after criticism, or when several valid paths remain.
+Use in `deciding`, after criticism, or when several valid paths remain.
 
-Generate at least three `A-*` candidate actions. For each record:
-
-```json
-{
-  "id": "A-001",
-  "action": "Concrete next action",
-  "resolves_uncertainty_ids": ["U-001"],
-  "expected_information_gain": 0.8,
-  "decision_relevance": 0.9,
-  "cost": 0.2,
-  "risk": 0.1,
-  "prerequisites": [],
-  "status": "candidate"
-}
-```
-
-Use the scores as transparent heuristics, not measurements. Present the routes
-to the human and recommend the action most likely to change the research
-decision per unit cost and risk. Do not mark it selected until the Direction
-Gate records the human choice. Return to grounding or route construction when
-the result weakens current assumptions. Recommend `claim_review` only when
-remaining uncertainties do not materially change the bounded claim.
+Generate at least three candidate next actions. For each, state target
+uncertainties, prerequisites, expected information and decision value, cost,
+risk, reversibility, H0-H4 level, and required gate. Scores are transparent
+heuristics, not measurements. Recommend the action most likely to change the
+decision per unit cost and risk, then stop at the applicable human checkpoint.

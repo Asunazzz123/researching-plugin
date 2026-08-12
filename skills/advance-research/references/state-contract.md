@@ -1,46 +1,55 @@
-# Research state contract
+# Research state contract v2
 
-Use this contract when creating a candidate `research_state.json`. The validator
-in `scripts/research_state.py` is authoritative.
+`research_state.json` is the canonical, single-writer state for a durable
+human-supervised research project. The validator in `scripts/research_state.py`
+is authoritative.
 
-## Workspace files
+## Workspace
 
 | Path | Role |
 |---|---|
 | `research_state.json` | Canonical current state |
-| `evidence.jsonl` | Append-only mirror of Evidence Packets |
-| `decisions.jsonl` | Append-only committed decision events |
-| `.checkpoints/research_state.rNNNN.json` | State before each commit |
-| `research_brief.md` | Default human-facing synthesis and route portfolio |
-| `research_process.md` | Optional action and access ledger requested by the user |
-| `experiments/` | Optional authorized plans, raw outputs, metrics, and notes |
-| `research_summary.md` | Derived human-readable view; never edit as state |
+| `evidence.jsonl` | Exact append-only mirror of Evidence Packets |
+| `decisions.jsonl` | Append-only canonical update events |
+| `.checkpoints/research_state.rNNNN.json` | State before every committed revision |
+| `orchestration/tasks/<task-id>/` | Frozen context, task-local reports and artifacts |
+| `orchestration/reports/<report-id>.json` | Immutable accepted or stale report archive |
+| `artifacts/` | Researcher-managed project artifacts |
+| `research_summary.md` | Derived ready, running, waiting-human, batch-review, conflict, stale-report, and blocked queues; never edit as state |
 
-## Top-level object
+Schema v2 does not auto-migrate v1. Unknown versions are read as unsupported and
+must not be rewritten. State loading is version-dispatched so a future release
+can register explicit migrations or auto-update policy.
+
+## Top-level shape
 
 ```json
 {
-  "schema_version": "1.0",
+  "schema_version": "2.0",
   "revision": 0,
-  "created_at": "2026-07-22T00:00:00+00:00",
-  "updated_at": "2026-07-22T00:00:00+00:00",
+  "created_at": "2026-08-12T00:00:00+00:00",
+  "updated_at": "2026-08-12T00:00:00+00:00",
   "project": {
     "id": "stable-project-id",
     "question": "A bounded research question",
-    "scope": ["What is included"],
-    "non_goals": ["What is excluded"],
-    "constraints": ["Time, data, compute, ethics, access"],
-    "resources": {"compute": "one GPU"}
+    "scope": ["Included boundary"],
+    "non_goals": ["Excluded target"],
+    "constraints": ["Data, access, ethics, time, or compute limit"],
+    "resources": {}
   },
+  "glossary": {},
   "current_stage": "framing",
   "uncertainties": [],
   "evidence": [],
   "claims": [],
-  "hypotheses": [],
-  "experiments": [],
-  "results": [],
+  "routes": [],
+  "working_propositions": [],
+  "protocols": [],
+  "observations": [],
+  "tasks": [],
+  "artifacts": [],
   "open_evidence_gaps": [],
-  "next_actions": [],
+  "conflicts": [],
   "approvals": {
     "scope": {"status": "pending", "by": null, "at": null, "note": null},
     "direction": {"status": "pending", "by": null, "at": null, "note": null},
@@ -52,147 +61,86 @@ in `scripts/research_state.py` is authoritative.
 }
 ```
 
-New workspaces include all five gates. The validator keeps legacy three-gate
-workspaces with the old `experiment` approval key readable, but resumed projects
-should migrate it to `plan` and add `direction` and `execution` before entering
-any new planning or execution branch.
+## Stages
 
-Use IDs with these prefixes:
+Use the domain-neutral cycle:
 
-| Collection | Prefix |
-|---|---|
-| uncertainties | `U-` |
-| evidence | `E-` |
-| claims | `C-` |
-| hypotheses | `H-` |
-| experiments | `EXP-` |
-| results | `R-` |
-| open evidence gaps | `G-` |
-| next actions | `A-` |
+`framing → grounding → route_selection → planning → working → interpreting → claim_review → deciding → complete`
 
-## Evidence Packet
+Evidence, interpretation, or scope changes may return the project to an earlier
+stage. Task-level waiting and parallel work belong in Task Node status; one
+`waiting_human` task must not freeze unrelated project work.
 
-```json
-{
-  "id": "E-001",
-  "proposition": "The exact proposition supported by the inspected source",
-  "stance": "supports",
-  "source_kind": "literature",
-  "source_id": "doi:10.xxxx/example",
-  "source_depth": "full_text",
-  "locator": {"page": 7, "section": "4.2", "figure": "Fig. 3"},
-  "limitations": ["Small sample", "Different target population"],
-  "confidence": 0.85
-}
-```
+## Canonical collections
 
-Allowed stance values are `supports`, `contradicts`, `context`, and
-`inconclusive`. Allowed source kinds are `literature`, `experiment`,
-`observation`, and `dataset`.
+| Collection | Prefix | Purpose |
+|---|---|---|
+| uncertainties | `U-` | Decision-relevant unknowns |
+| evidence | `E-` | Inspected, located Evidence Packets |
+| claims | `C-` | Bounded candidate or reviewed claims |
+| routes | `RT-` | Domain-neutral method routes |
+| working_propositions | `WP-` | Hypotheses, interpretations, models, or design propositions |
+| protocols | `PR-` | Action plans for any route |
+| observations | `O-` | Direct observations returned by a task or protocol |
+| tasks | `T-` | Human/sub-agent/main/external work DAG |
+| artifacts | `AR-` | Hashed files and data products |
+| open_evidence_gaps | `G-` | Precise unresolved evidence needs |
+| conflicts | `CF-` | Preserved contradictions or incompatibilities |
 
-Use source depth deliberately:
+## Route
 
-- `metadata`: identity and context only; it cannot support or contradict a claim.
-- `abstract`: only propositions explicitly present in the abstract.
-- `full_text`: require a non-empty locator.
-- `experiment_artifact`: reference a preserved local experiment output.
-- `direct_observation`: record a directly observed phenomenon.
-- `dataset`: describe evidence obtained from an inspected dataset.
-
-Evidence is immutable and append-only. Add a correcting Evidence Packet rather
-than editing or deleting an earlier packet.
-
-## Hypothesis
+Routes do not enumerate disciplines. Describe each route with orthogonal fields:
 
 ```json
 {
-  "id": "H-001",
-  "statement": "A falsifiable statement",
-  "mechanism": "Why the predicted effect should occur",
-  "evidence_ids": ["E-001"],
-  "assumptions": ["Required assumption"],
-  "predictions": ["Observable discriminating prediction"],
-  "falsifiers": ["Observation that would count against the hypothesis"],
-  "alternative_hypothesis_ids": ["H-002"],
-  "nearest_prior_work": ["doi:10.xxxx/example"],
-  "novelty_delta": "Bounded difference from the nearest work",
-  "cheapest_discriminating_test": "Smallest information-gaining step that changes the decision; it need not be a local experiment",
-  "status": "active"
+  "id": "RT-001",
+  "epistemic_goal": "explanatory",
+  "method_family": "Open description chosen for this project",
+  "required_capabilities": ["Required data or expertise"],
+  "executor_mix": ["agent", "human"],
+  "validation_strategy": "How observations can change the decision",
+  "uncertainty_ids": ["U-001"],
+  "risks": ["Known validity boundary"],
+  "status": "candidate"
 }
 ```
 
-Allowed statuses are `proposed`, `active`, `deprioritized`, `supported`, and
-`refuted`. Prefer several competing hypotheses over variants of one favored idea.
+Allowed epistemic goals are `descriptive`, `explanatory`, `predictive`,
+`evaluative`, `interpretive`, `design`, and `mixed`. `method_family` remains an
+open string.
 
-## Experiment
+Route executors are `agent`, `human`, `shared`, `expert`, and `external`;
+Task Nodes refine Agent work into `main_agent` or `subagent` where needed.
 
-```json
-{
-  "id": "EXP-001",
-  "title": "Bounded pilot title",
-  "hypothesis_ids": ["H-001", "H-002"],
-  "purpose": "Which uncertainty this experiment resolves",
-  "variables": {"independent": ["x"], "dependent": ["y"]},
-  "baselines": ["Existing method or null model"],
-  "controls": ["Leakage, ablation, or negative control"],
-  "confounds": ["Known plausible confound"],
-  "primary_metric": "A predeclared decision metric",
-  "secondary_metrics": [],
-  "budget": {"time_minutes": 30, "max_runs": 3},
-  "stop_conditions": ["Stop on data leakage", "Stop after max_runs"],
-  "artifact_paths": ["experiments/EXP-001/"],
-  "result_ids": [],
-  "status": "planned"
-}
-```
+## Evidence, observations, and claims
 
-Allowed statuses are `proposed`, `planned`, `approved`, `running`, `completed`,
-`failed`, and `stopped`.
+Evidence Packets retain proposition, stance, source identity, source lineage,
+source depth, locator, limitations, and confidence. Metadata may only be
+`context` or `inconclusive`. Inspected full text, artifacts, direct observations,
+datasets, and expert attestations require a locator.
 
-## Result and claim
+Evidence is immutable and append-only. Correct an earlier packet by adding a new
+packet and, when necessary, a Conflict record.
 
-```json
-{
-  "id": "R-001",
-  "experiment_id": "EXP-001",
-  "observations": ["Direct observation without interpretation"],
-  "metrics": {"primary": 0.73},
-  "artifact_paths": ["experiments/EXP-001/metrics.json"],
-  "unexpected_findings": [],
-  "limitations": []
-}
-```
-
-```json
-{
-  "id": "C-001",
-  "statement": "A bounded scientific claim",
-  "status": "inference",
-  "evidence_ids": ["E-001"],
-  "result_ids": ["R-001"],
-  "caveats": ["Boundary of the current evidence"]
-}
-```
-
-Claim statuses are `hypothesis`, `inference`, `supported`, `refuted`, and
-`unknown`. An `inference`, `supported`, or `refuted` claim must reference
-evidence or results.
+Observations describe what was directly returned by a Task or Protocol and link
+to hashed Artifacts. Claims separate interpretation from observation. A
+Sub-agent reducer always creates claims as `candidate`; supported, refuted, or
+final bounded claims remain subject to evidence and Claim Gate review.
 
 ## Update invariants
 
-- Keep `project.id` and `created_at` immutable.
-- Start a candidate from the current revision; stale candidates are rejected.
-- Preserve existing evidence as an exact prefix.
-- Follow the allowed research-stage graph; use `deciding` as the convergence
-  point after grounding, hypothesizing, designing, or interpreting. Enter the
-  experiment branch only when the research question actually needs it.
-- Treat candidate `A-*` actions in `deciding` as the research route portfolio.
-  Stop for Direction Gate rather than selecting a route for the human.
-- Require Direction Gate before `designing`, Plan Gate before `pilot_ready` or
-  `full_experiment_ready`, and a separate Execution Gate before `piloting` or
-  `experimenting`. Never infer either approval from a broad research request.
-- Reset both plan and execution approvals whenever the protocol changes.
+- Keep project ID and creation time immutable.
+- Start every candidate from the current revision; reject stale canonical writes.
+- Preserve existing Evidence as an exact prefix.
+- Commit only through `update_state.py` or the task reducer with actor
+  `main-agent`.
+- Reset Direction approval after selected routes change.
+- Reset Plan and Execution approval after a protocol changes.
 - Return material question, scope, non-goal, or constraint changes to `framing`
-  and reset direction, plan, execution, and claim approvals.
-- Commit canonical state only through `scripts/update_state.py`.
-- Store raw experiment artifacts before adding a Result record.
+  and reset Direction, Plan, Execution, and Claim approvals.
+- Require Scope approval before leaving framing, Direction approval before
+  planning/working, and Claim approval before complete.
+- Validate task dependencies, context hashes, resource isolation, human levels,
+  required gates, and task transitions before every commit.
+- Snapshot the relevant Route, Protocol, Evidence, Claim, and Artifact IDs so a
+  material input change invalidates only the affected task context.

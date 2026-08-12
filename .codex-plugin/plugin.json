@@ -1,7 +1,7 @@
 {
   "name": "researching-plugin",
-  "version": "0.7.0",
-  "description": "Route research tasks into literature discovery, project-local PDF records, evidence synthesis, cross-disciplinary research briefs, human-supervised direction selection, and optional authorized planning or execution workflows.",
+  "version": "1.0.0",
+  "description": "Route research tasks into literature discovery, project-local paper records, evidence synthesis, and a domain-neutral human-supervised Task DAG with auditable reports and gates.",
   "author": {
     "name": "Asuna",
     "url": "https://github.com/Asunazzz123"
@@ -18,14 +18,16 @@
     "mcp",
     "literature-search",
     "hypothesis-generation",
-    "experiment-design",
-    "research-workflow"
+    "research-workflow",
+    "research-orchestration",
+    "human-in-the-loop",
+    "task-dag"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Researching",
-    "shortDescription": "Build evidence-grounded, human-supervised research directions",
-    "longDescription": "Routes research tasks to focused literature discovery, project-local PDF decomposition and Markdown records, evidence grounding, cross-disciplinary concept and capability mapping, research-route comparison, human decision checkpoints, and optional separately authorized planning or execution.",
+    "shortDescription": "Coordinate evidence-grounded research with human checkpoints",
+    "longDescription": "Routes research tasks to focused literature discovery, project-local PDF records, evidence grounding, domain-neutral route comparison, H0-H4 task classification, bounded session-local parallel work, single-writer report reduction, and explicit human checkpoints or handoffs.",
     "developerName": "Asuna",
     "category": "Education",
     "capabilities": [
@@ -37,7 +39,8 @@
     "defaultPrompt": [
       "Use the researching workflow to find papers for my current task.",
       "Find a paper, save its authorized PDF in my research folder, and create a Markdown record.",
-      "Turn my rough question into a research brief with feasible routes and a human decision checkpoint."
+      "Turn my rough question into a research brief with feasible routes and a human decision checkpoint.",
+      "Build a durable research Task DAG, dispatch only safe independent work, and prepare Human Handoffs for tasks that require my participation."
     ],
     "brandColor": "#B31B1B"
   },

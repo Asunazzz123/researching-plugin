@@ -6,7 +6,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from research_state import load_json, validate_or_raise, write_summary
+from research_state import load_state, validate_or_raise, write_summary
 
 
 def main() -> int:
@@ -14,7 +14,7 @@ def main() -> int:
     parser.add_argument("workspace", type=Path)
     args = parser.parse_args()
     workspace = args.workspace.resolve()
-    state = load_json(workspace / "research_state.json")
+    state = load_state(workspace / "research_state.json")
     validate_or_raise(state)
     write_summary(workspace, state)
     print(workspace / "research_summary.md")

@@ -13,7 +13,7 @@ At every human gate, present:
 3. **Options** — two to four options with tradeoffs and a recommendation.
 4. **Consequences** — required resources, side effects, cost, access, ethics, and reversibility.
 5. **Approval boundary** — what the response will and will not authorize.
-6. **Exact reference** — route ID, plan ID, or named claim set being reviewed.
+6. **Exact reference** — `RT-*`, `PR-*`, `T-*`, or named Claim set being reviewed.
 
 ## Scope checkpoint
 
@@ -48,8 +48,8 @@ The following phrases alone are **not** execution authorization:
 
 Examples of sufficiently explicit authorization:
 
-- “Execute the approved EXP-002 plan using the listed local dataset and commands.”
-- “Run only the read-only validation steps in PLAN-01 on the supplied data; do not publish outputs.”
+- “Execute protocol PR-002 for task T-014 using only the reviewed inputs and actions.”
+- “Run only the read-only validation steps in PR-001 on the supplied material; do not publish outputs.”
 
 If the plan changes materially, discard the previous execution authorization and
 return to Plan Gate.
@@ -59,3 +59,20 @@ return to Plan Gate.
 Present bounded claims, supporting and contradicting evidence, limitations, and
 remaining unknowns. Human acceptance closes the current research cycle, not the
 entire scientific problem.
+
+## Task participation checkpoints
+
+- **H0 autonomous:** no advance human response is needed when validation is
+  deterministic, read-only, and repeatable.
+- **H1 batch-review:** present a batch summary and an auditable sample queue;
+  the reports remain candidates until the reducer accepts them.
+- **H2 checkpoint:** show competing candidates and ask the human to select,
+  combine, revise, or reject them.
+- **H3 collaborative:** issue a Human Handoff and resume only after the human
+  returns the requested observations or artifacts.
+- **H4 human-authority:** identify the accountable human decision or action;
+  an Agent may prepare material but may not substitute for that authority.
+
+A Human Handoff must state the action, prerequisites, quality requirements,
+expected artifacts, bias and deviation fields, and the exact resume condition. It should
+not expose internal chain-of-thought or ask for generic feedback.

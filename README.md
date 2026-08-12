@@ -4,10 +4,11 @@ Researching Plugin 是一个面向科研任务的 Codex 插件。它把“找论
 拆成两个可独立调用、又能互相回流的工作流：
 
 - 文献发现与证据获取；
-- 研究问题构建、证据综合、路线比较和人类决策。
+- 研究问题构建、证据综合、路线比较和人类半监督任务编排。
 
-项目默认产出研究简报、证据记录、可行路线和人类检查点，不会因为本机能够运行
-代码，就自动把跨学科研究问题转化成本地实验。
+项目默认产出研究简报、证据记录、可行路线、Task DAG、Sub-agent Report 和
+Human Handoff。具体方法由研究问题定义；插件不会因为本机能够执行某种工具，
+就把它当成所有研究的默认实践路线。
 
 
 
@@ -16,8 +17,9 @@ Researching Plugin 是一个面向科研任务的 Codex 插件。它把“找论
 - 先建立可信的研究问题和证据边界，再讨论实现或实验。
 - 将论文身份、公开元数据、开放获取、机构认证和下载权限分开处理。
 - 将下载的 PDF 保存在科研目录，并生成可按阶段重复读取的 Markdown 论文记录。
-- 让实验、仿真、田野观察、档案研究、专家咨询、数据获取和理论分析成为平级路线。
+- 用开放 `method_family` 表示具体方法，不在核心 Schema 中预设学科或路线枚举。
 - 在范围、方向、方案、执行和最终主张上保留明确的人类决策权。
+- 只并行分配安全、输入独立的低参与任务，并由主 Agent 单写者合并报告。
 - 保留失败检索、访问限制、能力缺口、冲突证据和研究过程记录。
 
 ## 当前已实现的功能
@@ -30,7 +32,7 @@ Researching Plugin 是一个面向科研任务的 Codex 插件。它把“找论
 |---|---|
 | `using-researching` | 插件入口；识别任务阶段并路由到合适的子 Skill |
 | `researching-paper-searching` | 文献发现、访问解析、授权下载和项目内 Markdown 论文记录 |
-| `advance-research` | 研究问题构建、证据综合、能力地图、路线比较和人类检查点 |
+| `advance-research` | 研究问题构建、证据综合、路线比较、Task DAG、H0-H4 与人类检查点 |
 
 已加载插件后，可以直接调用：
 
@@ -160,7 +162,7 @@ Evidence Packet。
 - 研究路线组合；
 - 推荐意见和一个明确的人类决策请求。
 
-### 6. Evidence Packet 与研究状态
+### 6. Schema v2 研究状态与任务编排
 
 Evidence Packet 将来源和科学主张分开记录，主要字段包括：
 
@@ -184,11 +186,42 @@ decisions.jsonl
 research_brief.md
 research_process.md
 research_summary.md
-experiments/
+artifacts/
+orchestration/
+├── tasks/<task-id>/
+└── reports/
 ```
 
 其中 `research_state.json` 是规范状态；Evidence Packet 和决策日志保持
-append-only；每次正式更新前保存 revision checkpoint。
+append-only；每次正式更新前保存 revision checkpoint。所有加载都经
+`schema_version: "2.0"` 入口；未知版本拒绝写入，本版不自动迁移 v1。
+
+顶层阶段是：
+
+```text
+framing → grounding → route_selection → planning → working
+→ interpreting → claim_review → deciding → complete
+```
+
+路线由 `epistemic_goal`、开放的 `method_family`、`required_capabilities`、
+`executor_mix`、`validation_strategy` 和 `uncertainty_ids` 正交描述。Task Node
+记录依赖、输入快照、读写范围、资源锁、输出合同、验证与合并策略。
+
+任务按行动性质分级：
+
+| 等级 | 含义 | 自动编排行为 |
+|---|---|---|
+| H0 | 确定性、只读或可重复验证 | 可校验并合并 |
+| H1 | 可批量处理、需要摘要或抽查 | 可并行，结果进入候选队列 |
+| H2 | 路线、协议或解释选择点 | 只生成候选，等待 checkpoint |
+| H3 | 依赖隐性知识和多轮人工反馈 | 生成 Human Handoff |
+| H4 | 伦理、法律、物理操作、机构责任或最终主张 | 只能由人类执行或确认 |
+
+主 Agent 根据 DAG 计算稳定的 ready frontier，默认最多并发 3 个会话内
+Sub-agent。无 Sub-agent 能力时按同一 DAG 顺序执行，结果语义不变。Sub-agent
+只读取冻结 Context Packet，不能继续派生 Agent、修改规范状态或批准 Gate；它
+提交不可变 Report，由 Single-writer Reducer 检查 schema、revision/context
+hash、locator、artifact hash、写入范围、同源重复和冲突后一次合并。
 
 ### 7. 人类监督 Gate
 
@@ -225,24 +258,35 @@ flowchart TD
     A["用户研究问题"] --> B["using-researching 路由"]
     B --> C["advance-research"]
     B --> D["researching-paper-searching"]
-    C --> E["问题与能力地图"]
+    C --> E["问题、能力与不确定性"]
     E --> F{"存在证据缺口？"}
     F -- "是" --> D
     D --> G["论文、访问状态与项目内 PDF"]
     G --> N["页级抽取与 Markdown 论文记录"]
     N --> O["按阶段重读并核验 locator"]
     O --> C
-    F -- "否" --> H["研究路线组合"]
+    F -- "否" --> H["领域中立研究路线组合"]
     H --> I["Direction Gate"]
     I -- "修改问题或补证据" --> C
-    I -- "选择路线" --> J["可选 Plan Gate"]
-    J --> K["可选 Execution Gate"]
-    K --> L["观察、结果与解释"]
-    L --> M["Claim Gate"]
+    I -- "选择路线" --> J["协议与 Task DAG"]
+    J --> K{"ready frontier"}
+    K -- "H0/H1" --> P["隔离的 Sub-agent 或顺序执行"]
+    K -- "H2" --> Q["候选方案与人工 checkpoint"]
+    K -- "H3/H4" --> R["Human Handoff"]
+    P --> S["不可变 Report"]
+    Q --> S
+    R --> S
+    S --> T["Single-writer validation + reducer"]
+    T --> U["观察、冲突与解释"]
+    U --> M["Claim Gate"]
+    M --> V{"仍有关键不确定性？"}
+    V -- "是" --> C
+    V -- "否" --> W["complete"]
 ```
 
-基础 Skill 的默认终点是 Direction Gate。只有人类选择路线后，才进入可选的
-方案设计；只有再次明确批准，才允许执行。
+基础 Skill 的默认终点是 Direction Gate。人类选择路线后才生成协议和 Task
+DAG；只有通过所需 Gate 的任务才会进入 frontier。循环可以暂停在人类任务上，
+待返回 artifact 与偏差记录后恢复。
 
 ## 发布结构
 
@@ -270,8 +314,11 @@ researching-plugin/
     ├── using-researching/
     ├── researching-paper-searching/
     └── advance-research/
-        ├── references/              # brief、state、prompt、gate 合同
-        └── scripts/                 # durable state harness
+        ├── references/              # brief、state、task、report、parallel、gate 合同
+        └── scripts/
+            ├── research_state.py    # Schema v2、DAG、状态转换和 checkpoint
+            ├── task_orchestration.py # context、frontier、report validation、reducer
+            └── manage_tasks.py      # 统一任务 CLI
 ```
 
 `researching-plugin/` 是完整、唯一的发布单元。通过 Git subtree 或独立仓库分发
@@ -286,8 +333,8 @@ Plugin release。
 插件加载后，可以从入口开始：
 
 ```text
-使用 $using-researching，把“城市热岛缓解措施是否对不同收入社区产生相同收益”
-构造成研究简报和可行路线。
+使用 $using-researching，把“现有证据能否区分两个竞争性解释”构造成研究简报、
+可行路线和需要我参与的检查点。
 ```
 
 直接检索证据：
@@ -307,8 +354,8 @@ pdf/，完成页级拆解并生成 papers/ 下的 Markdown 记录。
 直接构建研究方向：
 
 ```text
-使用 $advance-research，比较实验、公开基准、真实生产 trace 和理论分析四条路线，
-在需要我选择方向时停止。
+使用 $advance-research，为这个问题生成领域中立的路线组合和 Task DAG；只并行
+安全的低参与任务，并在需要我选择方向或提供材料时停止。
 ```
 
 ### 运行本地匿名发现
@@ -362,9 +409,36 @@ python skills/advance-research/scripts/update_state.py \
   ./research-workspace \
   --candidate ./candidate-state.json \
   --action "记录本次研究决策" \
-  --rationale "该决策与证据和限制的关系" \
-  --actor "human"
+  --rationale "该决策与证据和限制的关系"
 ```
+
+规范状态只有主 Agent 能通过 updater/reducer 写入。Sub-agent 使用统一任务 CLI：
+
+```bash
+# 生成并冻结一个任务的最小 Context Packet
+python skills/advance-research/scripts/manage_tasks.py \
+  context ./research-workspace T-001 --prepare
+
+# 计算最多三个互不冲突的 ready tasks，并将选中批次标为 running
+python skills/advance-research/scripts/manage_tasks.py \
+  frontier ./research-workspace --max-parallel 3
+python skills/advance-research/scripts/manage_tasks.py \
+  start ./research-workspace --max-parallel 3
+
+# 主 Agent 验证并合并不可变报告
+python skills/advance-research/scripts/manage_tasks.py \
+  validate-report ./research-workspace ./report.json
+python skills/advance-research/scripts/manage_tasks.py \
+  merge-report ./research-workspace ./report.json
+
+# 为 H3/H4 渲染人工任务包
+python skills/advance-research/scripts/manage_tasks.py \
+  handoff ./research-workspace T-014 --output ./handoff.md
+```
+
+`frontier` 只调度依赖已满足、输入已冻结、无资源锁冲突、无未满足 Gate，且没有
+高风险副作用的节点。Report 中的 observation、evidence 和 claim 都只是候选；
+Reducer 会分配规范 ID，Claim 仍保持 `candidate`，不能代替 Claim Gate。
 
 ## 依赖
 
@@ -394,6 +468,12 @@ alphaXiv MCP 额外要求：
 
 ## 验证
 
+运行 Python 测试：
+
+```bash
+python -m unittest discover -s tests -v
+```
+
 从 Plugin 根目录运行 MCP bridge 测试：
 
 ```bash
@@ -416,15 +496,24 @@ python /path/to/skill-creator/scripts/quick_validate.py \
 `/path/to/skill-creator` 需要替换为当前 Codex 环境中的 `skill-creator` Skill
 目录。
 
+最后验证完整 Plugin manifest：
+
+```bash
+python /path/to/plugin-creator/scripts/validate_plugin.py .
+git diff --check
+```
+
 ## 当前边界
 
 当前版本没有宣称实现：
 
 - 自动替研究者选择科研方向；
-- 未经确认直接执行实验、仿真或外部写入；
+- 未经确认直接执行受限、不可逆或外部写入动作；
 - 使用本地 toy/synthetic 数据代替缺失的真实领域条件；
-- 自动访问田野、实验室、档案、受治理数据或专有系统；
+- 自动访问物理环境、受治理数据、受限来源或专有系统；
 - 仅凭论文元数据生成科学结论；
+- 让 Sub-agent 修改规范 Claim、批准 Gate 或派生更多 Agent；
+- 引入常驻 scheduler、新 MCP worker 或绕过 sandbox；
 - 绕过 MFA、CAPTCHA、订阅权限、robots policy 或下载限制；
 - 将 alphaXiv OAuth 视为学校、CARSI、CNKI 或出版商登录；
 - 端到端覆盖所有学科的研究执行环境。
@@ -439,6 +528,9 @@ python /path/to/skill-creator/scripts/quick_validate.py \
 - [alphaXiv MCP 架构](references/alphaxiv-mcp.md)
 - [研究简报合同](skills/advance-research/references/research-brief-contract.md)
 - [研究状态合同](skills/advance-research/references/state-contract.md)
+- [Task Node 与 H0-H4 合同](skills/advance-research/references/task-node-contract.md)
+- [Sub-agent Report 合同](skills/advance-research/references/subagent-report-contract.md)
+- [并行、资源锁与合并策略](skills/advance-research/references/parallelization-policy.md)
 - [Prompt operators](skills/advance-research/references/prompt-kinds.md)
 - [Research gates](skills/advance-research/references/gates.md)
 - [Human checkpoints](skills/advance-research/references/human-checkpoints.md)

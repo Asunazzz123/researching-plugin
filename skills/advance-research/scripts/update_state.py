@@ -16,7 +16,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--candidate", required=True, type=Path)
     parser.add_argument("--action", required=True)
     parser.add_argument("--rationale", required=True)
-    parser.add_argument("--actor", required=True)
+    parser.add_argument(
+        "--actor",
+        default="main-agent",
+        choices=("main-agent",),
+        help="Schema v2 uses a single canonical writer.",
+    )
     parser.add_argument("--evidence-id", action="append", default=[])
     return parser
 
